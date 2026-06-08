@@ -1,0 +1,31 @@
+# ============================================================
+# Group Project — Yêu cầu 2: RAG Evaluation Pipeline
+# Python 3.10+
+# (Liệt kê đúng thư viện mà code trong group_project/ thực sự import)
+# ============================================================
+
+# --- Core ---
+python-dotenv>=1.0.0       # đọc OPENAI_API_KEY từ file .env
+
+# --- Retrieval & Indexing (Task 4, 5, 6, 9) ---
+chromadb>=0.4.0            # vector store (PersistentClient -> data/chroma_db)
+rank-bm25>=0.2.2           # lexical search BM25 (Task 6)
+openai>=1.30.0            # embedding text-embedding-3-small (Task 4/5)
+                           # + generation gpt-4o-mini (Task 10)
+numpy>=1.24.0             # vector math cho BM25 / MMR rerank (Task 6, 7)
+langchain-text-splitters>=0.2.0   # RecursiveCharacterTextSplitter (Task 4, build index)
+
+# --- Evaluation (deliverable nhóm) ---
+deepeval>=1.0.0           # 4 metric: Faithfulness, Answer Relevancy,
+                           # Contextual Recall, Contextual Precision
+
+# --- Data pipeline (Task 1-3) — chỉ cần khi build lại corpus từ đầu ---
+requests>=2.31.0          # tải tài liệu / crawl
+beautifulsoup4>=4.12.0    # parse HTML bài báo (Task 2)
+markitdown>=0.1.0         # chuyển tài liệu sang Markdown (Task 3)
+pdfminer.six>=20221105    # trích text từ PDF luật (Task 3)
+
+# --- Reranking (Task 7) — TÙY CHỌN ---
+# Mặc định pipeline dùng MMR (qua OpenAI embedding, KHÔNG cần cài thêm).
+# Bỏ comment dòng dưới nếu muốn dùng cross-encoder reranker chạy local:
+# sentence-transformers>=2.2.0
