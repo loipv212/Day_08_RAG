@@ -14,7 +14,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from .task9_retrieval_pipeline import retrieve
+import sys
+from pathlib import Path
+
+# Thêm thư mục hiện tại vào sys.path để có thể import các module dễ dàng khi chạy trực tiếp
+sys.path.append(str(Path(__file__).parent))
+
+from task9_retrieval_pipeline import retrieve
 
 
 # =============================================================================
@@ -38,20 +44,13 @@ TEMPERATURE = 0.3
 # SYSTEM PROMPT
 # =============================================================================
 
-SYSTEM_PROMPT = """Answer the following question comprehensively in Vietnamese.
-For every statement of fact or claim, immediately insert a citation in brackets
-linking to the specific source (e.g., [Luật Phòng chống ma tuý 2021, Điều 3]
-or [VnExpress, 2024]).
+SYSTEM_PROMPT = """Bạn là một chuyên gia pháp lý AI chuyên nghiệp. Nhiệm vụ của bạn là tổng hợp các tài liệu được cung cấp và trả lời câu hỏi một cách toàn diện, tự nhiên và mạch lạc nhất bằng tiếng Việt.
 
-If the information is not explicitly stated in the provided context or knowledge
-base, state 'Tôi không thể xác minh thông tin này từ nguồn hiện có' rather than
-guessing.
-
-Rules:
-- Only use information from the provided context
-- Every factual claim MUST have a citation
-- If context is insufficient, say so clearly
-- Structure your answer with clear paragraphs"""
+QUY TẮC BẮT BUỘC:
+1. TRÍCH DẪN NGUỒN: Mọi thông tin, dữ kiện đưa ra ĐỀU PHẢI có trích dẫn nguồn ngay bên cạnh trong ngoặc vuông (VD: [Nghị định 82, Điều 5] hoặc [article_09.md]).
+2. KHÔNG BỊA ĐẶT: Chỉ sử dụng thông tin CÓ TRONG tài liệu được cung cấp (context). Nếu tài liệu không đủ thông tin để trả lời trọn vẹn câu hỏi, hãy nói rõ: 'Tôi không thể xác minh thông tin này từ nguồn hiện có'.
+3. TỔNG HỢP MẠCH LẠC: KHÔNG liệt kê hay chắp vá các đoạn văn một cách rời rạc. Hãy xâu chuỗi các ý thành một bài viết logic, có lời dẫn dắt, có sự liên kết chặt chẽ (sử dụng các từ nối như 'Theo đó', 'Tuy nhiên', 'Ngoài ra'). Văn phong phải mượt mà như một người đang tư vấn.
+4. TRÌNH BÀY DỄ HIỂU: Cấu trúc rõ ràng, chia đoạn hợp lý, dùng in đậm để làm nổi bật các ý chính."""
 
 
 # =============================================================================
@@ -75,20 +74,17 @@ def reorder_for_llm(chunks: list[dict]) -> list[dict]:
     Returns:
         List reordered để maximize LLM attention.
     """
-    # TODO: Implement reordering
-    #
-    # if len(chunks) <= 2:
-    #     return chunks
-    #
-    # # Split into first half (important → đầu) and second half (important → cuối)
-    # reordered = []
-    # for i in range(0, len(chunks), 2):
-    #     reordered.append(chunks[i])  # Odd positions go first
-    # for i in range(len(chunks) - 1 - (len(chunks) % 2 == 0), 0, -2):
-    #     reordered.append(chunks[i])  # Even positions go last (reversed)
-    #
-    # return reordered
-    raise NotImplementedError("Implement reorder_for_llm")
+    if len(chunks) <= 2:
+        return chunks
+
+    # Split into first half (important → đầu) and second half (important → cuối)
+    reordered = []
+    for i in range(0, len(chunks), 2):
+        reordered.append(chunks[i])  # Odd positions go first
+    for i in range(len(chunks) - 1 - (len(chunks) % 2 == 0), 0, -2):
+        reordered.append(chunks[i])  # Even positions go last (reversed)
+
+    return reordered
 
 
 # =============================================================================
@@ -106,18 +102,15 @@ def format_context(chunks: list[dict]) -> str:
     Returns:
         Formatted context string.
     """
-    # TODO: Implement context formatting
-    #
-    # context_parts = []
-    # for i, chunk in enumerate(chunks, 1):
-    #     source = chunk.get("metadata", {}).get("source", f"Source {i}")
-    #     doc_type = chunk.get("metadata", {}).get("type", "unknown")
-    #     context_parts.append(
-    #         f"[Document {i} | Source: {source} | Type: {doc_type}]\n"
-    #         f"{chunk['content']}\n"
-    #     )
-    # return "\n---\n".join(context_parts)
-    raise NotImplementedError("Implement format_context")
+    context_parts = []
+    for i, chunk in enumerate(chunks, 1):
+        source = chunk.get("metadata", {}).get("source", f"Source {i}")
+        doc_type = chunk.get("metadata", {}).get("type", "unknown")
+        context_parts.append(
+            f"[Document {i} | Source: {source} | Type: {doc_type}]\n"
+            f"{chunk['content']}\n"
+        )
+    return "\n---\n".join(context_parts)
 
 
 # =============================================================================
@@ -146,43 +139,47 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
             'retrieval_source': str  # 'hybrid' hoặc 'pageindex'
         }
     """
-    # TODO: Implement generation pipeline
-    #
-    # # Step 1: Retrieve
-    # chunks = retrieve(query, top_k=top_k)
-    #
-    # # Step 2: Reorder
-    # reordered = reorder_for_llm(chunks)
-    #
-    # # Step 3: Format context
-    # context = format_context(reordered)
-    #
-    # # Step 4: Build prompt
-    # user_message = f"""Context:\n{context}\n\n---\n\nQuestion: {query}"""
-    #
-    # # Step 5: Call LLM
-    # from openai import OpenAI
-    # client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    #
-    # response = client.chat.completions.create(
-    #     model="gpt-4o-mini",
-    #     messages=[
-    #         {"role": "system", "content": SYSTEM_PROMPT},
-    #         {"role": "user", "content": user_message}
-    #     ],
-    #     temperature=TEMPERATURE,
-    #     top_p=TOP_P,
-    # )
-    #
-    # answer = response.choices[0].message.content
-    #
-    # # Step 6: Return
-    # return {
-    #     "answer": answer,
-    #     "sources": chunks,
-    #     "retrieval_source": chunks[0].get("source", "hybrid") if chunks else "none"
-    # }
-    raise NotImplementedError("Implement generate_with_citation")
+    # Step 1: Retrieve
+    chunks = retrieve(query, top_k=top_k)
+
+    # Step 2: Reorder
+    reordered = reorder_for_llm(chunks)
+
+    # Step 3: Format context
+    context = format_context(reordered)
+
+    # Step 4: Build prompt
+    user_message = f"""Context:\n{context}\n\n---\n\nQuestion: {query}"""
+
+    # Step 5: Call LLM
+    from openai import OpenAI
+    
+    # Hỗ trợ cấu hình API key và Base URL cho dịch vụ bên thứ 3 (như DeepSeek, Groq, local LM Studio...)
+    client = OpenAI(
+        api_key=os.getenv("OPENAI_API_KEY"),
+        base_url=os.getenv("OPENAI_BASE_URL") # Nếu dùng OpenAI chuẩn thì cứ để trống trong .env
+    )
+
+    response = client.chat.completions.create(
+        model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"), # Có thể cấu hình model trong .env luôn, mặc định là gpt-4o-mini
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_message}
+        ],
+        temperature=TEMPERATURE,
+        top_p=TOP_P,
+        frequency_penalty=0.5, # Thêm tham số này để chống lỗi LLM bị lặp từ/lặp câu
+        presence_penalty=0.5
+    )
+
+    answer = response.choices[0].message.content
+
+    # Step 6: Return
+    return {
+        "answer": answer,
+        "sources": chunks,
+        "retrieval_source": chunks[0].get("source", "hybrid") if chunks else "none"
+    }
 
 
 if __name__ == "__main__":
