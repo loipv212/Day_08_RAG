@@ -88,3 +88,7 @@ data/standardized/*
 !data/standardized/.gitkeep
 *.db
 *.sqlite3
+
+# Vector stores (regenerable)
+chroma_db/
+vector_store/
