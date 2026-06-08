@@ -170,28 +170,55 @@ run_dashboard()
 
 ## Kiến Trúc Hệ Thống
 
-```mermaid
-graph TD
-    A[Golden Dataset] --> B(eval_pipeline.py)
-    B --> C{RAG Pipeline}
-    
-    subgraph Config A (Hybrid + Reranking)
-    C --> D1[ChromaDB - Vector Search]
-    C --> D2[BM25 - Lexical Search]
-    D1 --> E(RRF Fusion)
-    D2 --> E
-    E --> F[BAAI Reranker]
-    F --> G[LLM Generation]
-    end
-    
-    subgraph Config B (Dense Only)
-    C --> H[ChromaDB - Vector Search]
-    H --> I[LLM Generation]
-    end
+Sơ đồ dưới đây khớp đúng code nhóm. A/B test chỉ khác nhau **đúng một bước Rerank** (tham số `use_reranking`); phần truy hồi Hybrid (vector + BM25 + RRF) và sinh đáp án là chung cho cả 2 config.
 
-    G --> J[DeepEval Framework]
-    I --> J
-    J --> K[results.md]
+```text
+                ┌────────────────────────────┐
+                │  Golden Dataset (22 Q&A)    │  golden_dataset.json
+                └──────────────┬─────────────┘
+                               │
+                ┌──────────────▼─────────────┐
+                │      eval_pipeline.py       │  chạy A/B, chấm điểm, xuất báo cáo
+                └──────────────┬─────────────┘
+                               │
+                ┌──────────────▼─────────────┐
+                │  RAG Pipeline (rag_pipeline.py)
+                │  tham số: use_reranking      │
+                └──────────────┬─────────────┘
+                               │
+                ┌──────────────▼─────────────────────────┐
+                │  HYBRID RETRIEVAL (chung cho A & B)      │
+                │   • Semantic Search — ChromaDB           │  Task 5
+                │     (OpenAI text-embedding-3-small)      │
+                │   • Lexical Search — BM25                │  Task 6
+                │   • RRF Fusion (gộp 2 nhánh theo rank)    │  Task 7
+                └──────────────┬─────────────────────────┘
+                               │
+              ┌────────────────┴────────────────┐
+   Config A   │                                  │   Config B
+ (use_reranking=True)                     (use_reranking=False)
+   ┌──────────▼───────────┐            ┌─────────▼────────────┐
+   │  Rerank — MMR (Task 7)│            │  (bỏ qua bước rerank) │
+   └──────────┬───────────┘            └─────────┬────────────┘
+              └────────────────┬────────────────┘
+                               │
+                ┌──────────────▼─────────────┐
+                │  Fallback PageIndex          │  Task 8
+                │  (chỉ khi best_score < 0.3)  │
+                └──────────────┬─────────────┘
+                               │
+                ┌──────────────▼─────────────┐
+                │  LLM Generation — gpt-4o-mini│  Task 10 (trả lời có citation)
+                └──────────────┬─────────────┘
+                               │
+                ┌──────────────▼─────────────┐
+                │  DeepEval — 4 metrics        │  Faithfulness · Answer Relevancy
+                │                              │  Context Recall · Context Precision
+                └──────────────┬─────────────┘
+                               │
+                ┌──────────────▼─────────────┐
+                │  results.md                  │  bảng điểm + phân tích + đề xuất
+                └────────────────────────────┘
 ```
 
 ---
@@ -208,14 +235,24 @@ graph TD
 
 ## Hướng Dẫn Chạy
 
+> Nhóm chọn **Yêu cầu 2 — RAG Evaluation Pipeline** (không có chatbot app riêng).
+
 ```bash
-# Cài đặt dependencies
+# 1. Vào thư mục group_project
+cd group_project
+
+# 2. Cài đặt dependencies
 pip install -r requirements.txt
 
-# Chạy app
-streamlit run app.py
-# hoặc
-chainlit run app.py
+# 3. Tạo file .env trong group_project/ (embedding, generation và DeepEval đều dùng OpenAI)
+#    OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxx
+
+# 4. (Tùy chọn) Build lại index vào ChromaDB nếu chưa có thư mục data/chroma_db
+python -m src.task4_chunking_indexing
+
+# 5. Chạy đánh giá A/B + xuất báo cáo
+python evaluation/eval_pipeline.py
+#    -> Kết quả được ghi vào evaluation/results.md
 ```
 
 ---
