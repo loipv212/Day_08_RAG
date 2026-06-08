@@ -176,14 +176,13 @@ run_dashboard()
 
 ---
 
-## Phân Công Công Việc
+## Phân Công Công Việc (Chốt Option 2: RAG Evaluation)
 
-| Thành viên | MSSV | Nhiệm vụ | Trạng thái |
-|-----------|------|----------|------------|
-| | | | |
-| | | | |
-| | | | |
-| | | | |
+| Thành viên | MSSV | Nhiệm vụ chi tiết (Bám sát Yêu cầu chung & Yêu cầu 2) | Trạng thái |
+|-----------|------|-------------------------------------------------------|------------|
+| **Đạt** | *Chưa điền* | **Data, Report & Diagram (No-code):**<br>- Tạo `golden_dataset.json` (15+ cặp Q&A).<br>- Viết báo cáo phân tích vào `results.md`.<br>- Vẽ Sơ đồ Kiến trúc Hệ thống (Architecture Diagram) chèn vào README. | 🔲 TODO |
+| **Giang** | *Chưa điền* | **Pipeline Integration (Code):**<br>- Lấy code cá nhân (Retrieval, Generation) ghép thành 1 RAG pipeline hoàn chỉnh.<br>- Code pipeline phải nhận tham số để switch được 2 configs (VD: Bật/Tắt Reranking) phục vụ A/B Test.<br>- Đảm bảo code chạy được để Demo. | 🔲 TODO |
+| **Lợi** | *Chưa điền* | **Evaluation Script & A/B Test (Code):**<br>- Viết logic bằng DeepEval/RAGAS trong `eval_pipeline.py`.<br>- Chạy so sánh A/B 2 cấu hình từ pipeline của Giang.<br>- Quản lý Github chung (gom code, push repo). | 🔲 TODO |
 
 ---
 
