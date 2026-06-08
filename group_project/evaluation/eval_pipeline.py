@@ -76,36 +76,66 @@ def evaluate_with_deepeval(rag_pipeline, golden_dataset: list[dict]) -> dict:
 def evaluate_with_ragas(rag_pipeline, golden_dataset: list[dict]) -> dict:
     """
     Evaluate RAG pipeline sử dụng RAGAS.
-
-    pip install ragas
     """
-    # TODO: Implement
-    #
-    # from ragas import evaluate
-    # from ragas.metrics import (
-    #     faithfulness,
-    #     answer_relevancy,
-    #     context_recall,
-    #     context_precision,
-    # )
-    # from datasets import Dataset
-    #
-    # eval_data = {"question": [], "answer": [], "contexts": [], "ground_truth": []}
-    #
-    # for item in golden_dataset:
-    #     result = rag_pipeline.generate_with_citation(item["question"])
-    #     eval_data["question"].append(item["question"])
-    #     eval_data["answer"].append(result["answer"])
-    #     eval_data["contexts"].append([c["content"] for c in result["sources"]])
-    #     eval_data["ground_truth"].append(item["expected_answer"])
-    #
-    # dataset = Dataset.from_dict(eval_data)
-    # result = evaluate(
-    #     dataset,
-    #     metrics=[faithfulness, answer_relevancy, context_recall, context_precision],
-    # )
-    # return result.to_pandas()
-    raise NotImplementedError("Implement evaluate_with_ragas")
+    try:
+        from ragas import evaluate
+        from ragas.metrics import (
+            faithfulness,
+            answer_relevancy,
+            context_recall,
+            context_precision,
+        )
+        from datasets import Dataset
+    except ImportError:
+        raise ImportError("Thiếu thư viện. Vui lòng chạy: pip install ragas datasets")
+
+    print(f"🚀 Đang chạy đánh giá {len(golden_dataset)} câu bằng RAGAS. Vui lòng đợi...")
+
+    eval_data = {
+        "question": [],
+        "answer": [],
+        "contexts": [],
+        "ground_truth": [] # RAGAS yêu cầu tên cột là ground_truth
+    }
+
+    for item in golden_dataset:
+        question = item["question"]
+        expected_answer = item["expected_answer"]
+
+        # Gọi RAG pipeline do anh Giang viết
+        # Lưu ý: Hàm này phải trả về dict có dạng {"answer": "...", "sources": [{"content": "..."}, ...]}
+        result = rag_pipeline.generate_with_citation(question)
+
+        eval_data["question"].append(question)
+        eval_data["answer"].append(result["answer"])
+
+        # Trích xuất phần text context từ sources
+        contexts = [c.get("content", str(c)) for c in result.get("sources", [])]
+        eval_data["contexts"].append(contexts)
+        
+        eval_data["ground_truth"].append(expected_answer)
+
+    # Chuyển đổi sang định dạng Dataset của HuggingFace
+    dataset = Dataset.from_dict(eval_data)
+
+    # Khởi chạy chấm điểm với 4 tiêu chí cốt lõi
+    metrics = [faithfulness, answer_relevancy, context_recall, context_precision]
+    
+    try:
+        evaluation_result = evaluate(dataset, metrics=metrics)
+    except Exception as e:
+        print("❌ Lỗi khi chạy RAGAS (Thường do quên set biến môi trường OPENAI_API_KEY).")
+        raise e
+
+    print("\n--- ĐIỂM TRUNG BÌNH (RAGAS) ---")
+    print(evaluation_result)
+
+    # Chuyển kết quả sang pandas DataFrame -> dict để Lợi dễ dàng ghi ra file Markdown
+    df_result = evaluation_result.to_pandas()
+    return {
+        "overall_scores": evaluation_result,
+        "detailed_results": df_result.to_dict(orient="records")
+    }
 
 
 # =============================================================================
@@ -201,14 +231,15 @@ if __name__ == "__main__":
     golden_dataset = load_golden_dataset()
     print(f"Loaded {len(golden_dataset)} test cases")
 
-    # TODO: Import your RAG pipeline
-    # from src.task10_generation import generate_with_citation
-    #
-    # Chọn 1 framework:
-    # results = evaluate_with_deepeval(pipeline, golden_dataset)
-    # results = evaluate_with_ragas(pipeline, golden_dataset)
-    # results = evaluate_with_trulens(pipeline, golden_dataset)
-    #
-    # comparison = compare_configs(pipeline, golden_dataset)
-    # export_results(results, comparison)
-    print("⚠ Implement evaluation logic and run again!")
+    # Import RAG pipeline từ gốc dự án nhóm (đã được Giang đóng gói)
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from rag_pipeline import pipeline_default
+
+    print("\n[TEST] Bắt đầu chạy Evaluation Pipeline với RAGAS...")
+    
+    # Lợi có thể comment lại các dòng dưới nếu chưa muốn chạy ngay
+    # results = evaluate_with_ragas(pipeline_default, golden_dataset)
+    
+    print("\n✅ Tích hợp Pipeline thành công! Lợi đã có thể bắt đầu code tiếp phần A/B Testing và Export Results.")
