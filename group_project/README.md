@@ -151,10 +151,10 @@ run_dashboard()
 
 ### Deliverable Evaluation
 
-- [ ] File `group_project/evaluation/golden_dataset.json` — 15+ cặp Q&A
-- [ ] File `group_project/evaluation/eval_pipeline.py` — script chạy evaluation
-- [ ] File `group_project/evaluation/results.md` — bảng điểm + phân tích
-- [ ] So sánh A/B ít nhất 2 configs
+- [x] File `group_project/evaluation/golden_dataset.json` — 15+ cặp Q&A
+- [x] File `group_project/evaluation/eval_pipeline.py` — script chạy evaluation
+- [x] File `group_project/evaluation/results.md` — bảng điểm + phân tích
+- [x] So sánh A/B ít nhất 2 configs
 
 ---
 
@@ -170,8 +170,28 @@ run_dashboard()
 
 ## Kiến Trúc Hệ Thống
 
-```
-[Vẽ diagram kiến trúc ở đây]
+```mermaid
+graph TD
+    A[Golden Dataset] --> B(eval_pipeline.py)
+    B --> C{RAG Pipeline}
+    
+    subgraph Config A (Hybrid + Reranking)
+    C --> D1[ChromaDB - Vector Search]
+    C --> D2[BM25 - Lexical Search]
+    D1 --> E(RRF Fusion)
+    D2 --> E
+    E --> F[BAAI Reranker]
+    F --> G[LLM Generation]
+    end
+    
+    subgraph Config B (Dense Only)
+    C --> H[ChromaDB - Vector Search]
+    H --> I[LLM Generation]
+    end
+
+    G --> J[DeepEval Framework]
+    I --> J
+    J --> K[results.md]
 ```
 
 ---
@@ -180,9 +200,9 @@ run_dashboard()
 
 | Thành viên | MSSV | Nhiệm vụ chi tiết (Bám sát Yêu cầu chung & Yêu cầu 2) | Trạng thái |
 |-----------|------|-------------------------------------------------------|------------|
-| **Đạt** | *Chưa điền* | **Data, Report & Diagram (No-code):**<br>- Tạo `golden_dataset.json` (15+ cặp Q&A).<br>- Viết báo cáo phân tích vào `results.md`.<br>- Vẽ Sơ đồ Kiến trúc Hệ thống (Architecture Diagram) chèn vào README. | 🔲 TODO |
-| **Giang** | *Chưa điền* | **Pipeline Integration (Code):**<br>- Lấy code cá nhân (Retrieval, Generation) ghép thành 1 RAG pipeline hoàn chỉnh.<br>- Code pipeline phải nhận tham số để switch được 2 configs (VD: Bật/Tắt Reranking) phục vụ A/B Test.<br>- Đảm bảo code chạy được để Demo. | 🔲 TODO |
-| **Lợi** | *Chưa điền* | **Evaluation Script & A/B Test (Code):**<br>- Viết logic bằng DeepEval/RAGAS trong `eval_pipeline.py`.<br>- Chạy so sánh A/B 2 cấu hình từ pipeline của Giang.<br>- Quản lý Github chung (gom code, push repo). | 🔲 TODO |
+| **Đạt** | 2A202600549 | **Data, Report & Diagram (No-code):**<br>- Tạo `golden_dataset.json` (15+ cặp Q&A).<br>- Viết báo cáo phân tích vào `results.md`.<br>- Vẽ Sơ đồ Kiến trúc Hệ thống (Architecture Diagram) chèn vào README. | ✅ DONE |
+| **Giang** | 2A202600624 | **Pipeline Integration (Code):**<br>- Lấy code cá nhân (Retrieval, Generation) ghép thành 1 RAG pipeline hoàn chỉnh.<br>- Code pipeline phải nhận tham số để switch được 2 configs (VD: Bật/Tắt Reranking) phục vụ A/B Test.<br>- Đảm bảo code chạy được để Demo. | ✅ DONE |
+| **Lợi** | 2A202600784 | **Evaluation Script & A/B Test (Code):**<br>- Viết logic bằng DeepEval/RAGAS trong `eval_pipeline.py`.<br>- Chạy so sánh A/B 2 cấu hình từ pipeline của Giang.<br>- Quản lý Github chung (gom code, push repo). | ✅ DONE |
 
 ---
 
